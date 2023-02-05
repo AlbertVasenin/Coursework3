@@ -74,7 +74,7 @@ public class SocksController {
         maxCottonPercent);
     if (quantity != 0) {
       return ResponseEntity.ok().body(quantity);
-    }else{
+    } else {
       return ResponseEntity.notFound().build();
     }
   }
@@ -89,11 +89,8 @@ public class SocksController {
       @RequestParam(name = "size") Size size,
       @RequestParam(name = "cottonPercent") Integer cottonPercent,
       @RequestParam(name = "quantity") Integer quantity) throws ProductIsOutOfStock {
-    if (socksService.deleteSocks(color, size, cottonPercent, quantity)) {
-      return ResponseEntity.ok().build();
-    } else {
-      return ResponseEntity.notFound().build();
-    }
+    socksService.deleteSocks(color, size, cottonPercent, quantity);
+    return ResponseEntity.ok().build();
   }
 
   @Operation(summary = "Получение всего списка носков", description = "Входные данные не нужны")

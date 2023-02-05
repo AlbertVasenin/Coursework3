@@ -41,6 +41,13 @@ public class SocksServiceImpl implements SocksService {
   @Override
   public boolean takeSocksFromTheWarehouse(Socks socks) throws ProductIsOutOfStock, BadRequest {
     validate(socks);
+    if (isContainsValueMapSocks(socks)) {
+      return true;
+    }
+    throw new ProductIsOutOfStock("На складе не хватает пар носков");
+  }
+
+  private boolean isContainsValueMapSocks(Socks socks) {
     if (mapSocks.containsValue(socks)) {
       for (Entry<Long, Socks> entry : mapSocks.entrySet()) {
         if (entry.getValue().equals(socks)) {
@@ -53,10 +60,6 @@ public class SocksServiceImpl implements SocksService {
                 quantity);
             mapSocks.put(key, socksNew);
             return true;
-          } else {
-            throw new ProductIsOutOfStock(
-                "На складе не хватает пар носков, в запросе больше на: " + (Math.abs(
-                    oldQuantity - newQuantity)));
           }
         }
       }
@@ -90,25 +93,10 @@ public class SocksServiceImpl implements SocksService {
   public boolean deleteSocks(Color color, Size size, int cottonPercent, int quantity)
       throws ProductIsOutOfStock {
     Socks socks = new Socks(color, size, cottonPercent, quantity);
-    if (mapSocks.containsValue(socks)) {
-      for (Entry<Long, Socks> entry : mapSocks.entrySet()) {
-        if (entry.getValue().equals(socks)) {
-          long key = entry.getKey();
-          int oldQuantity = entry.getValue().getQuantity();
-          int defectiveQuantitySocks = socks.getQuantity();
-          if (oldQuantity >= defectiveQuantitySocks) {
-            int quantityNew = oldQuantity - defectiveQuantitySocks;
-            Socks socksNew = new Socks(socks.getColor(), socks.getSize(), socks.getCottonPercent(),
-                quantityNew);
-            mapSocks.put(key, socksNew);
-            return true;
-          } else {
-            throw new ProductIsOutOfStock("Нечего списать");
-          }
-        }
-      }
+    if (isContainsValueMapSocks(socks)) {
+      return true;
     }
-    return false;
+    throw new ProductIsOutOfStock("Нечего списать");
   }
 
   @Override

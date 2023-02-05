@@ -11,13 +11,13 @@ public interface SocksService {
 
   long addSocks(Socks socks) throws BadRequest;
 
-  void takeSocksFromTheWarehouse(Socks socks) throws ProductIsOutOfStock, BadRequest;
+  boolean takeSocksFromTheWarehouse(Socks socks) throws ProductIsOutOfStock, BadRequest;
 
-  void deleteSocks(Color color, Size size, int cottonPercent, int quantity)
+  boolean deleteSocks(Color color, Size size, int cottonPercent, int quantity)
       throws ProductIsOutOfStock;
 
   int getSocksQuantity(Color color, Size size, Integer minCottonPercent,
       Integer maxCottonPercent);
 
-  Map<Long, Socks> getListSocks();
+  Map<Long, Socks> getMapSocks();
 }

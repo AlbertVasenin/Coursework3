@@ -14,59 +14,61 @@ import pro.sky.coursework_3_socks_warehouse.service.SocksService;
 @Service
 public class SocksServiceImpl implements SocksService {
 
-  private final Map<Long, Socks> listSocks = new TreeMap<>();
+  private Map<Long, Socks> mapSocks = new TreeMap<>();
   private static long id = 1;
 
   @Override
   public long addSocks(Socks socks) throws BadRequest {
     validate(socks);
-    if (listSocks.containsValue(socks)) {
-      for (Entry<Long, Socks> entry : listSocks.entrySet()) {
+    if (mapSocks.containsValue(socks)) {
+      for (Entry<Long, Socks> entry : mapSocks.entrySet()) {
         if (entry.getValue().equals(socks)) {
           long getId = entry.getKey();
           int getOldQuantity = entry.getValue().getQuantity();
           int getNewQuantity = getOldQuantity + socks.getQuantity();
           Socks socksNew = new Socks(socks.getColor(), socks.getSize(), socks.getCottonPercent(),
               getNewQuantity);
-          listSocks.put(getId, socksNew);
+          mapSocks.put(getId, socksNew);
           return getId;
         }
       }
     } else {
-      listSocks.put(id, socks);
+      mapSocks.put(id, socks);
     }
     return id++;
   }
 
   @Override
-  public void takeSocksFromTheWarehouse(Socks socks) throws ProductIsOutOfStock, BadRequest {
+  public boolean takeSocksFromTheWarehouse(Socks socks) throws ProductIsOutOfStock, BadRequest {
     validate(socks);
-    if (listSocks.containsValue(socks)) {
-      for (Entry<Long, Socks> entry : listSocks.entrySet()) {
+    if (mapSocks.containsValue(socks)) {
+      for (Entry<Long, Socks> entry : mapSocks.entrySet()) {
         if (entry.getValue().equals(socks)) {
-          long getId = entry.getKey();
-          int getOldQuantity = entry.getValue().getQuantity();
-          int getNewQuantity = socks.getQuantity();
-          if (getOldQuantity >= getNewQuantity) {
-            int quantity = getOldQuantity - getNewQuantity;
+          long key = entry.getKey();
+          int oldQuantity = entry.getValue().getQuantity();
+          int newQuantity = socks.getQuantity();
+          if (oldQuantity >= newQuantity) {
+            int quantity = oldQuantity - newQuantity;
             Socks socksNew = new Socks(socks.getColor(), socks.getSize(), socks.getCottonPercent(),
                 quantity);
-            listSocks.put(getId, socksNew);
+            mapSocks.put(key, socksNew);
+            return true;
           } else {
             throw new ProductIsOutOfStock(
                 "На складе не хватает пар носков, в запросе больше на: " + (Math.abs(
-                    getOldQuantity - getNewQuantity)));
+                    oldQuantity - newQuantity)));
           }
         }
       }
     }
+    return false;
   }
 
   @Override
   public int getSocksQuantity(Color color, Size size, Integer minCottonPercent,
       Integer maxCottonPercent) {
     int count = 0;
-    for (Entry<Long, Socks> entry : listSocks.entrySet()) {
+    for (Entry<Long, Socks> entry : mapSocks.entrySet()) {
       if (color != null && !entry.getValue().getColor().equals(color)) {
         continue;
       }
@@ -85,31 +87,33 @@ public class SocksServiceImpl implements SocksService {
   }
 
   @Override
-  public void deleteSocks(Color color, Size size, int cottonPercent, int quantity)
+  public boolean deleteSocks(Color color, Size size, int cottonPercent, int quantity)
       throws ProductIsOutOfStock {
     Socks socks = new Socks(color, size, cottonPercent, quantity);
-    if (listSocks.containsValue(socks)) {
-      for (Entry<Long, Socks> entry : listSocks.entrySet()) {
+    if (mapSocks.containsValue(socks)) {
+      for (Entry<Long, Socks> entry : mapSocks.entrySet()) {
         if (entry.getValue().equals(socks)) {
-          long getId = entry.getKey();
-          int getOldQuantity = entry.getValue().getQuantity();
+          long key = entry.getKey();
+          int oldQuantity = entry.getValue().getQuantity();
           int defectiveQuantitySocks = socks.getQuantity();
-          if (getOldQuantity >= defectiveQuantitySocks) {
-            int quantityNew = getOldQuantity - defectiveQuantitySocks;
+          if (oldQuantity >= defectiveQuantitySocks) {
+            int quantityNew = oldQuantity - defectiveQuantitySocks;
             Socks socksNew = new Socks(socks.getColor(), socks.getSize(), socks.getCottonPercent(),
                 quantityNew);
-            listSocks.put(getId, socksNew);
+            mapSocks.put(key, socksNew);
+            return true;
           } else {
             throw new ProductIsOutOfStock("Нечего списать");
           }
         }
       }
     }
+    return false;
   }
 
   @Override
-  public Map<Long, Socks> getListSocks() {
-    return listSocks;
+  public Map<Long, Socks> getMapSocks() {
+    return Map.copyOf(mapSocks);
   }
 
   private void validate(Socks sock) throws BadRequest {

@@ -33,8 +33,8 @@ public class SocksController {
   }
 
   @Operation(summary = "Создание пары носков", description =
-      "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE и выберите размер от R35, "
-          + "соответствующего 35 размеру или R35_5, соответсвующего размеру 35.5 до R43, 43й размер")
+      "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE и выберите размер от R35 "
+          + "(соответствующего 35 размеру) или R35_5 (соответсвующего размеру 35.5) до R43 (43й размер)")
   @PostMapping()
   public ResponseEntity<Long> addSocks(@Valid @RequestBody Socks socks) throws BadRequest {
     long id = socksService.addSocks(socks);
@@ -42,18 +42,21 @@ public class SocksController {
   }
 
   @Operation(summary = "Забрать носки со склада", description =
-      "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE и выберите размер от R35, "
-          + "соответствующего 35 размеру или R35_5, соответсвующего размеру 35.5 до R43, 43й размер")
+      "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE и выберите размер от R35 "
+          + "(соответствующего 35 размеру) или R35_5 (соответсвующего размеру 35.5) до R43 (43й размер)")
   @PutMapping()
-  public ResponseEntity<Void> takeSocks(@Valid @RequestBody Socks socks)
+  public ResponseEntity<Boolean> takeSocks(@Valid @RequestBody Socks socks)
       throws ProductIsOutOfStock, BadRequest {
-    socksService.takeSocksFromTheWarehouse(socks);
-    return ResponseEntity.ok().build();
+    if (socksService.takeSocksFromTheWarehouse(socks)) {
+      return ResponseEntity.ok().build();
+    } else {
+      return ResponseEntity.notFound().build();
+    }
   }
 
   @Operation(summary = "Узнать количество необходимых носков на складе", description =
-      "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE и выберите размер от R35, "
-          + "соответствующего 35 размеру или R35_5, соответсвующего размеру 35.5 до R43, 43й размер,"
+      "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE, выберите размер от R35 "
+          + "(соответствующего 35 размеру) или R35_5 (соответсвующего размеру 35.5) до R43 (43й размер),"
           + " введите min и max процент содержания хлопка (от 0 до 100)")
   @GetMapping()
   public ResponseEntity<Integer> knowHowManySocks(@RequestParam(name = "color") Color color,
@@ -66,22 +69,25 @@ public class SocksController {
   }
 
   @Operation(summary = "Списать n-ое количество бракованных носков на складе", description =
-      "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE и выберите размер от R35, "
-          + "соответствующего 35 размеру или R35_5, соответсвующего размеру 35.5 до R43, 43й размер,"
+      "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE, выберите размер от R35, "
+          + "(соответствующего 35 размеру) или R35_5 (соответсвующего размеру 35.5) до R43 (43й размер),"
           + " введите процент содержания хлопка (от 0 до 100)")
   @DeleteMapping
-  public ResponseEntity<Void> deletedDefectiveSocks(@RequestParam(name = "color") Color color,
+  public ResponseEntity<Boolean> deletedDefectiveSocks(@RequestParam(name = "color") Color color,
       @RequestParam(name = "size") Size size,
       @RequestParam(name = "cottonPercent") Integer cottonPercent,
       @RequestParam(name = "quantity") Integer quantity) throws ProductIsOutOfStock {
-    socksService.deleteSocks(color, size, cottonPercent, quantity);
-    return ResponseEntity.ok().build();
+    if (socksService.deleteSocks(color, size, cottonPercent, quantity)) {
+      return ResponseEntity.ok().build();
+    } else {
+      return ResponseEntity.notFound().build();
+    }
   }
 
   @Operation(summary = "Получение всего списка носков", description = "Входные данные не нужны")
   @GetMapping("/get/all")
   public ResponseEntity<Map<Long, Socks>> getAllSocks() {
-    Map<Long, Socks> socksMap = socksService.getListSocks();
+    Map<Long, Socks> socksMap = socksService.getMapSocks();
     if (socksMap != null) {
       return ResponseEntity.ok(socksMap);
     } else {

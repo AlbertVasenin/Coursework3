@@ -1,6 +1,8 @@
 package pro.sky.coursework_3_socks_warehouse.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 import javax.validation.Valid;
@@ -35,6 +37,8 @@ public class SocksController {
   @Operation(summary = "Создание пары носков", description =
       "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE и выберите размер от R35 "
           + "(соответствующего 35 размеру) или R35_5 (соответсвующего размеру 35.5) до R43 (43й размер)")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Удалось добавить приход")})
   @PostMapping()
   public ResponseEntity<Long> addSocks(@Valid @RequestBody Socks socks) throws BadRequest {
     long id = socksService.addSocks(socks);
@@ -44,13 +48,14 @@ public class SocksController {
   @Operation(summary = "Забрать носки со склада", description =
       "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE и выберите размер от R35 "
           + "(соответствующего 35 размеру) или R35_5 (соответсвующего размеру 35.5) до R43 (43й размер)")
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Носки найдены")})
   @PutMapping()
   public ResponseEntity<Boolean> takeSocks(@Valid @RequestBody Socks socks)
       throws ProductIsOutOfStock, BadRequest {
     if (socksService.takeSocksFromTheWarehouse(socks)) {
       return ResponseEntity.ok().build();
     } else {
-      return ResponseEntity.notFound().build();
+      return ResponseEntity.badRequest().build();
     }
   }
 
@@ -58,6 +63,8 @@ public class SocksController {
       "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE, выберите размер от R35 "
           + "(соответствующего 35 размеру) или R35_5 (соответсвующего размеру 35.5) до R43 (43й размер),"
           + " введите min и max процент содержания хлопка (от 0 до 100)")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Количество носков подсчитано")})
   @GetMapping()
   public ResponseEntity<Integer> knowHowManySocks(@RequestParam(name = "color") Color color,
       @RequestParam(name = "size") Size size,
@@ -65,13 +72,18 @@ public class SocksController {
       @RequestParam(name = "maxCottonPercent") Integer maxCottonPercent) {
     Integer quantity = socksService.getSocksQuantity(color, size, minCottonPercent,
         maxCottonPercent);
-    return ResponseEntity.ok().body(quantity);
+    if (quantity != 0) {
+      return ResponseEntity.ok().body(quantity);
+    }else{
+      return ResponseEntity.notFound().build();
+    }
   }
 
   @Operation(summary = "Списать n-ое количество бракованных носков на складе", description =
       "Выберите подходящий цвет:RED, BLUE, GREEN, BLACK, WHITE, выберите размер от R35, "
           + "(соответствующего 35 размеру) или R35_5 (соответсвующего размеру 35.5) до R43 (43й размер),"
           + " введите процент содержания хлопка (от 0 до 100)")
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Носки списаны")})
   @DeleteMapping
   public ResponseEntity<Boolean> deletedDefectiveSocks(@RequestParam(name = "color") Color color,
       @RequestParam(name = "size") Size size,

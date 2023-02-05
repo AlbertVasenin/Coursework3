@@ -52,11 +52,8 @@ public class SocksController {
   @PutMapping()
   public ResponseEntity<Boolean> takeSocks(@Valid @RequestBody Socks socks)
       throws ProductIsOutOfStock, BadRequest {
-    if (socksService.takeSocksFromTheWarehouse(socks)) {
-      return ResponseEntity.ok().build();
-    } else {
-      return ResponseEntity.badRequest().build();
-    }
+    socksService.takeSocksFromTheWarehouse(socks);
+    return ResponseEntity.ok().build();
   }
 
   @Operation(summary = "Узнать количество необходимых носков на складе", description =

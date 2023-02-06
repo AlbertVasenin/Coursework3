@@ -1,14 +1,19 @@
 package pro.sky.coursework_3_socks_warehouse.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import javax.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import pro.sky.coursework_3_socks_warehouse.exception.BadRequest;
 import pro.sky.coursework_3_socks_warehouse.exception.ProductIsOutOfStock;
 import pro.sky.coursework_3_socks_warehouse.model.Color;
 import pro.sky.coursework_3_socks_warehouse.model.Size;
 import pro.sky.coursework_3_socks_warehouse.model.Socks;
+import pro.sky.coursework_3_socks_warehouse.service.FileService;
 import pro.sky.coursework_3_socks_warehouse.service.SocksService;
 
 @Service
@@ -16,6 +21,12 @@ public class SocksServiceImpl implements SocksService {
 
   private Map<Long, Socks> mapSocks = new TreeMap<>();
   private static long id = 1;
+
+  public SocksServiceImpl(FileService fileService) {
+    this.fileService = fileService;
+  }
+
+  private final FileService fileService;
 
   @Override
   public long addSocks(Socks socks) throws BadRequest {
@@ -29,11 +40,13 @@ public class SocksServiceImpl implements SocksService {
           Socks socksNew = new Socks(socks.getColor(), socks.getSize(), socks.getCottonPercent(),
               getNewQuantity);
           mapSocks.put(getId, socksNew);
+          saveToFile();
           return getId;
         }
       }
     } else {
       mapSocks.put(id, socks);
+      saveToFile();
     }
     return id++;
   }
@@ -42,6 +55,7 @@ public class SocksServiceImpl implements SocksService {
   public boolean takeSocksFromTheWarehouse(Socks socks) throws ProductIsOutOfStock, BadRequest {
     validate(socks);
     if (isContainsValueMapSocks(socks)) {
+      saveToFile();
       return true;
     }
     throw new ProductIsOutOfStock("На складе не хватает пар носков");
@@ -94,9 +108,34 @@ public class SocksServiceImpl implements SocksService {
       throws ProductIsOutOfStock {
     Socks socks = new Socks(color, size, cottonPercent, quantity);
     if (isContainsValueMapSocks(socks)) {
+      saveToFile();
       return true;
     }
     throw new ProductIsOutOfStock("Нечего списать");
+  }
+
+  private void saveToFile() {
+    try {
+      String json = new ObjectMapper().writeValueAsString(mapSocks);
+      fileService.saveToFile(json);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Ошибка сохранения файла");
+    }
+  }
+
+  private void readFromFile() {
+    String json = fileService.readeFromFile();
+    try {
+      mapSocks = new ObjectMapper().readValue(json, new TypeReference<TreeMap<Long, Socks>>() {
+      });
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Ошибка чтения файла");
+    }
+  }
+
+  @PostConstruct
+  private void init() {
+    readFromFile();
   }
 
   @Override

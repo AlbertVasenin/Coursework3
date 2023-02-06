@@ -34,14 +34,14 @@ public class SocksServiceImpl implements SocksService {
     if (mapSocks.containsValue(socks)) {
       for (Entry<Long, Socks> entry : mapSocks.entrySet()) {
         if (entry.getValue().equals(socks)) {
-          long getId = entry.getKey();
-          int getOldQuantity = entry.getValue().getQuantity();
-          int getNewQuantity = getOldQuantity + socks.getQuantity();
+          long key = entry.getKey();
+          int oldQuantity = entry.getValue().getQuantity();
+          int newQuantity = oldQuantity + socks.getQuantity();
           Socks socksNew = new Socks(socks.getColor(), socks.getSize(), socks.getCottonPercent(),
-              getNewQuantity);
-          mapSocks.put(getId, socksNew);
+              newQuantity);
+          mapSocks.put(key, socksNew);
           saveToFile();
-          return getId;
+          return key;
         }
       }
     } else {

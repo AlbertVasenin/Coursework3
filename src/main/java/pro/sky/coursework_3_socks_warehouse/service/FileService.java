@@ -1,7 +1,6 @@
 package pro.sky.coursework_3_socks_warehouse.service;
 
 import java.io.File;
-import java.nio.file.Path;
 
 public interface FileService {
 
@@ -12,6 +11,4 @@ public interface FileService {
   boolean cleanFile();
 
   File getDataFile();
-
-  Path createTempFile(String suffix);
 }

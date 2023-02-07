@@ -3,6 +3,7 @@ package pro.sky.coursework_3_socks_warehouse.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -13,7 +14,9 @@ import pro.sky.coursework_3_socks_warehouse.exception.ProductIsOutOfStock;
 import pro.sky.coursework_3_socks_warehouse.model.Color;
 import pro.sky.coursework_3_socks_warehouse.model.Size;
 import pro.sky.coursework_3_socks_warehouse.model.Socks;
+import pro.sky.coursework_3_socks_warehouse.model.TypeOperation;
 import pro.sky.coursework_3_socks_warehouse.service.FileService;
+import pro.sky.coursework_3_socks_warehouse.service.OperationService;
 import pro.sky.coursework_3_socks_warehouse.service.SocksService;
 
 @Service
@@ -22,16 +25,18 @@ public class SocksServiceImpl implements SocksService {
   private Map<Long, Socks> mapSocks = new TreeMap<>();
   private static long id = 1;
 
-  public SocksServiceImpl(FileService fileService) {
-    this.fileService = fileService;
-  }
-
   private final FileService fileService;
+  private final OperationService operationService;
+
+  public SocksServiceImpl(FileService fileService, OperationService operationService) {
+    this.fileService = fileService;
+    this.operationService = operationService;
+  }
 
   @Override
   public long addSocks(Socks socks) throws BadRequest {
     validate(socks);
-    if (mapSocks.containsValue(socks)) {
+    if (!mapSocks.isEmpty() && mapSocks.containsValue(socks)) {
       for (Entry<Long, Socks> entry : mapSocks.entrySet()) {
         if (entry.getValue().equals(socks)) {
           long key = entry.getKey();
@@ -40,12 +45,14 @@ public class SocksServiceImpl implements SocksService {
           Socks socksNew = new Socks(socks.getColor(), socks.getSize(), socks.getCottonPercent(),
               newQuantity);
           mapSocks.put(key, socksNew);
+          operationService.addOperations(TypeOperation.IN, LocalDateTime.now(), socksNew);
           saveToFile();
           return key;
         }
       }
     } else {
       mapSocks.put(id, socks);
+      operationService.addOperations(TypeOperation.IN, LocalDateTime.now(), socks);
       saveToFile();
     }
     return id++;
@@ -55,6 +62,7 @@ public class SocksServiceImpl implements SocksService {
   public boolean takeSocksFromTheWarehouse(Socks socks) throws ProductIsOutOfStock, BadRequest {
     validate(socks);
     if (isContainsValueMapSocks(socks)) {
+      operationService.addOperations(TypeOperation.OUT, LocalDateTime.now(), socks);
       saveToFile();
       return true;
     }
@@ -62,7 +70,7 @@ public class SocksServiceImpl implements SocksService {
   }
 
   private boolean isContainsValueMapSocks(Socks socks) {
-    if (mapSocks.containsValue(socks)) {
+    if (!mapSocks.isEmpty() && mapSocks.containsValue(socks)) {
       for (Entry<Long, Socks> entry : mapSocks.entrySet()) {
         if (entry.getValue().equals(socks)) {
           long key = entry.getKey();
@@ -108,6 +116,7 @@ public class SocksServiceImpl implements SocksService {
       throws ProductIsOutOfStock {
     Socks socks = new Socks(color, size, cottonPercent, quantity);
     if (isContainsValueMapSocks(socks)) {
+      operationService.addOperations(TypeOperation.OFF, LocalDateTime.now(), socks);
       saveToFile();
       return true;
     }

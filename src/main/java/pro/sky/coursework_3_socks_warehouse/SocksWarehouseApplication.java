@@ -4,10 +4,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class Coursework3SocksWarehouseApplication {
+public class SocksWarehouseApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(Coursework3SocksWarehouseApplication.class, args);
+    SpringApplication.run(SocksWarehouseApplication.class, args);
   }
-
 }
